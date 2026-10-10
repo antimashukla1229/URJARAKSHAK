@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UrjaRakshak · Alerts</title><link rel="stylesheet" href="shared.css">
+<style>.al{border-left:4px solid var(--line);margin-bottom:10px}.al b.s{font-size:11px;letter-spacing:.05em}.ch{display:inline-block;font-size:11px;color:var(--mut);border:1px solid var(--line);border-radius:99px;padding:1px 8px;margin:6px 6px 0 0}</style></head>
+<body>
+<main>
+  <div class="card"><h2>Alert feed</h2>
+    <div class="note">Alerts are generated live from the detector and thermal engine and refresh every 15 seconds. <b>Send to my WhatsApp</b> uses your mobile number saved on the Profile page. If the WhatsApp API is not configured on the server, it opens WhatsApp with the message pre-filled instead. SMS is simulated.</div></div>
+  <div id="feed"></div>
+</main>
+<script src="shared.js"></script>
+<script>
+nav('alerts.html');
+let A = [], R = {};
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+
+async function load() {
+  await loadBase();
+  const insp = await J('/api/inspections');
+  A = [];
+  [...TR].sort((a, b) => b.unexplainedPct - a.unexplainedPct).forEach(t => {
+    const l = lvl(t), th = TH[t.id];
+    if (l === 'g') return;
+    A.push({sev: l === 'r' ? 'CRITICAL' : 'WARNING', c: COL[l], title: t.id + (l === 'r' ? ': act now' : ': keep watching'),
+      text: `Unexplained loss ${t.unexplainedPct}%, peak load ${t.peakLoadPct}%, hot-spot ${th.peakHotSpotC}°C (${th.hoursAbove110C} h above 110°C).`, link: 'health.html?id=' + t.id});
+  });
+  insp.slice(0, 5).forEach(r => A.push({sev: 'ACTION', c: '#4da3ff', title: 'Inspect ' + r.target + ' (' + r.transformer + ')',
+    text: r.reason + ' Estimated recovery ' + inr(r.estMonthlyRecoveryInr) + '/month.', link: 'health.html?id=' + r.transformer}));
+  render();
+}
+
+function render() {
+  const now = new Date().toLocaleTimeString();
+  document.getElementById('feed').innerHTML = A.length ? A.map((a, i) => `<div class="card al" style="border-left-color:${a.c}">
+    <b class="s" style="color:${a.c}">${a.sev}</b> · <span class="sub">${now}</span><div style="font-size:15px;font-weight:600;margin:2px 0">${esc(a.title)}</div>
+    <div>${esc(a.text)}</div><a class="lnk" href="${a.link}">Open details</a>
+    <div style="margin-top:8px"><button class="ghost" onclick="sendWA(${i})">Send to my WhatsApp</button> <span class="note">${R[a.title] || ''}</span></div>
+    <div><span class="ch">Dashboard ✓</span><span class="ch">SMS (simulated)</span><span class="ch">WhatsApp</span></div></div>`).join('')
+    : '<div class="card">No active alerts. The grid looks healthy.</div>';
+}
+
+async function sendWA(i) {
+  const a = A[i], msg = `🚨 UrjaRakshak ${a.sev}: ${a.title}\n${a.text}`;
+  R[a.title] = 'Sending…'; render();
+  const r = await authFetch('/api/alerts/whatsapp', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({message: msg})});
+  const x = await r.json().catch(() => ({}));
+  if (r.status === 503) {
+    const p = await J('/api/profile');
+    R[a.title] = `WhatsApp API not configured. <a class="lnk" target="_blank" href="https://wa.me/91${p.phone}?text=${encodeURIComponent(msg)}">Open WhatsApp with this message</a>`;
+  } else R[a.title] = (r.ok ? '✅ ' : '⚠️ ') + esc(x.message || r.status);
+  render();
+}
+load(); setInterval(() => { if (!Object.values(R).some(v => v === 'Sending…')) load(); }, 15000);
+</script></body></html>

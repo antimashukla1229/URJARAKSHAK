@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>UrjaRakshak · Profile & Assignment</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .profile-container {
+      max-width: 820px;
+      margin: 20px auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 640px) {
+      .profile-grid { grid-template-columns: 1fr; }
+    }
+    .badge-role {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      background: rgba(49, 130, 206, 0.15);
+      color: #63b3ed;
+      border: 1px solid rgba(99, 179, 237, 0.3);
+      margin-bottom: 10px;
+    }
+    .form-group {
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 12px;
+      color: #a0aec0;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .ro {
+      opacity: 0.65;
+      cursor: not-allowed;
+      background: #1a202c;
+    }
+    .info-card-box {
+      background: #171e2e;
+      border: 1px solid #2d3748;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #cbd5e0;
+    }
+    .info-card-box div {
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .info-card-box div:last-child { margin-bottom: 0; }
+    .action-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <div class="profile-container">
+    
+    <div class="insight" id="banner" style="display:none; background: rgba(49, 130, 206, 0.15); border-color: #3182ce;">
+      👋 <b>Welcome to UrjaRakshak!</b> Please verify and update your operational details to proceed to the grid dashboard.
+    </div>
+
+    <div class="card">
+      <div class="badge-role" id="roleBadge">DISCOM OFFICER</div>
+      <h2 style="margin-top: 0;">User Profile & Duty Assignment</h2>
+      <p style="font-size: 13px; color: #a0aec0; margin-bottom: 20px;">
+        Operational credentials and DISCOM deployment details for grid management and field inspection routing.
+      </p>
+
+      <div class="profile-grid">
+        
+        <div>
+          <h3 style="font-size: 14px; color: #63b3ed; border-bottom: 1px solid #2d3748; padding-bottom: 6px; margin-bottom: 14px;">
+            🏢 DISCOM Deployment Info
+          </h3>
+
+          <div class="form-group">
+            <label>Registered Email</label>
+            <input id="email" class="ro" disabled>
+          </div>
+
+          <div class="form-group">
+            <label>Assigned Role & DISCOM</label>
+            <input id="role" class="ro" disabled>
+          </div>
+
+          <div class="form-group">
+            <label>Employee ID / Badge No.</label>
+            <input id="empId" placeholder="e.g. EMP-DISCOM-9042">
+          </div>
+
+          <div class="form-group">
+            <label>Designation / Rank</label>
+            <input id="rank" placeholder="e.g. Executive Engineer / Junior Field Officer">
+          </div>
+
+          <div class="form-group">
+            <label>Sub-ordinating Division / Zone</label>
+            <input id="division" placeholder="e.g. Zone-4 Feeder Control / Division North">
+          </div>
+        </div>
+
+        <div>
+          <h3 style="font-size: 14px; color: #63b3ed; border-bottom: 1px solid #2d3748; padding-bottom: 6px; margin-bottom: 14px;">
+            👤 Identity & Contact Details
+          </h3>
+
+          <div class="form-group">
+            <label>Full Name</label>
+            <input id="name" autocomplete="name" placeholder="Enter official full name">
+          </div>
+
+          <div class="form-group">
+            <label>Mobile Number (10 digits)</label>
+            <input id="phone" inputmode="numeric" placeholder="9876543210">
+          </div>
+
+          <div class="form-group">
+            <label>Age</label>
+            <input id="age" type="number" min="18" max="70" placeholder="e.g. 34">
+          </div>
+
+          <div class="form-group">
+            <label>National ID Number (12 digits)</label>
+            <input id="nid" inputmode="numeric" placeholder="Enter to set or update">
+          </div>
+          <div class="note" id="idnote" style="color: #68d391; font-weight: 600;"></div>
+        </div>
+
+      </div>
+
+      <div class="info-card-box" id="roleInfoBox"></div>
+
+      <div class="note" style="margin-top: 15px;">
+        🔒 <b>Security Note:</b> Identity documents undergo format and checksum verification only. To protect privacy, only the last 4 digits are retained in your operational profile.
+      </div>
+
+      <div id="msg" style="min-height: 20px; margin-top: 10px; font-weight: 600; font-size: 13px;"></div>
+
+      <div class="action-bar">
+        <button onclick="saveProfile()" style="padding: 10px 24px;">Save Profile</button>
+        <button class="ghost" id="skip" style="display:none;" onclick="skipProfile()">Skip for now</button>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script src="shared.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  nav('profile.html');
+  initProfilePage();
+});
+
+function getElem(id) {
+  return document.getElementById(id);
+}
+
+function getQueryParam(key) {
+  return new URLSearchParams(window.location.search).get(key);
+}
+
+async function initProfilePage() {
+  try {
+    const p = await J('/api/profile');
+    const rolesMap = { officer: 'DISCOM Officer', inspector: 'Field Inspector' };
+
+    getElem('email').value = p.email || '';
+    getElem('role').value = (rolesMap[p.role] || p.role) + ' · ' + (p.discom || 'State Grid Utility');
+    getElem('roleBadge').textContent = (rolesMap[p.role] || p.role).toUpperCase();
+    
+    getElem('name').value = p.fullName || '';
+    getElem('phone').value = p.phone || '';
+    getElem('age').value = p.age || '';
+    
+    getElem('empId').value = p.employeeId || (p.role === 'officer' ? 'OFF-8821' : 'INS-4402');
+    getElem('rank').value = p.rank || (p.role === 'officer' ? 'Assistant Executive Engineer' : 'Senior Line Inspector');
+    getElem('division').value = p.division || 'Substation Sub-Division 3 (North Grid)';
+
+    getElem('idnote').textContent = p.idMasked ? 'Saved ID: ' + p.idMasked + ' (leave blank to keep current ID)' : '';
+
+    renderScopeBox(p.role);
+
+    if (getQueryParam('first') && !p.complete) {
+      getElem('banner').style.display = 'block';
+      getElem('skip').style.display = 'inline-block';
+    }
+  } catch (err) {
+    console.error("Failed to load profile data:", err);
+  }
+}
+
+function renderScopeBox(role) {
+  const box = getElem('roleInfoBox');
+  if (role === 'inspector') {
+    box.innerHTML = '<div><b>🕵️ Field Inspector Operational Scope:</b></div>' +
+      '<div><span>Assigned Territory:</span> <b>High-Loss Feeder Circuits & Consumer Audits</b></div>' +
+      '<div><span>Inspection Capabilities:</span> <b>On-site Meter Bypass Testing, Theft Logging, & Consumer Complaints</b></div>' +
+      '<div><span>Duty Status:</span> <b style="color:#68d391;">Active Field Deployment</b></div>';
+  } else {
+    box.innerHTML = '<div><b>⚡ DISCOM Officer Control Scope:</b></div>' +
+      '<div><span>Jurisdiction:</span> <b>Grid Substation & Transformer Fleet Intelligence</b></div>' +
+      '<div><span>Operational Powers:</span> <b>Thermal Twin Monitoring, Inspection Dispatch, & Revenue Loss Approvals</b></div>' +
+      '<div><span>Duty Status:</span> <b style="color:#68d391;">Active Monitoring Officer</b></div>';
+  }
+}
+
+function skipProfile() {
+  sessionStorage.setItem('skipProfile', '1');
+  window.location.href = 'index.html';
+}
+
+async function saveProfile() {
+  const body = {
+    fullName: getElem('name').value,
+    phone: getElem('phone').value,
+    age: getElem('age').value ? Number(getElem('age').value) : null,
+    nationalId: getElem('nid').value,
+    employeeId: getElem('empId').value,
+    rank: getElem('rank').value,
+    division: getElem('division').value
+  };
+
+  try {
+    const response = await authFetch('/api/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json().catch(function () { return {}; });
+    const msgElem = getElem('msg');
+
+    if (response.ok) {
+      msgElem.style.color = 'var(--g)';
+      msgElem.textContent = '✅ Profile and deployment credentials saved successfully.';
+      setTimeout(function () { window.location.href = 'index.html'; }, 800);
+    } else {
+      msgElem.style.color = 'var(--r)';
+      msgElem.textContent = data.message || ('Error ' + response.status);
+    }
+  } catch (err) {
+    const msgElem = getElem('msg');
+    msgElem.style.color = 'var(--r)';
+    msgElem.textContent = '⚠️ Request failed. Check server connection.';
+  }
+}
+</script>
+</body>
+</html>

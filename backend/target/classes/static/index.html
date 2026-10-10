@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>UrjaRakshak · Overview</title>
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+  <main>
+    <div class="kpis" id="kpis"></div>
+    <div class="grid">
+      <div class="card">
+        <h2>Grid map (schematic)</h2>
+        <div id="map"></div>
+        <div class="note">Click a transformer to open its health page. Red = act now · Amber = watch · Green = healthy</div>
+      </div>
+      <div class="card">
+        <h2>Fleet status</h2>
+        <div id="fleet"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Inspection priority · ranked by expected recovery ÷ inspection cost</h2>
+      <div id="insp"></div>
+      <div class="note">Assumptions: tariff ₹7/kWh · consumer visit ₹500 · area audit ₹3000 (assumes 50% of hidden energy recovered) · 10-day data scaled to 1 month. Probabilities are model estimates, not confirmed theft.</div>
+    </div>
+    <div class="card">
+      <h2>Validation on simulated data (ground truth known only to us)</h2>
+      <div id="score"></div>
+    </div>
+  </main>
+  <script src="shared.js"></script>
+  <script src="eric.js"></script>
+  <script>
+    nav('index.html');
+    (async () => {
+      const [sc, insp] = await Promise.all([J('/api/scorecard'), J('/api/inspections')]);
+      await loadBase();
+      kpis(sc); map(); fleet(); inspTable(insp); score(sc);
+    })();
+
+    function kpis(sc) {
+      const bad = TR.filter(t => lvl(t) !== 'g').length;
+      const leak = TR.reduce((s, t) => s + t.unexplainedKwh, 0) * 3 * 7;
+      const hot = Object.values(TH).reduce((s, t) => s + t.hoursAbove110C, 0);
+      const k = [
+        [bad + ' / ' + TR.length, 'Transformers needing attention'],
+        [inr(leak), 'Est. monthly revenue leakage'],
+        [sc.totalFlagged, 'Meters flagged (consumer analysis)'],
+        [hot + ' h', 'Fleet hours above 110°C hot-spot']
+      ];
+      document.getElementById('kpis').innerHTML = k.map(x => `<div class="card kpi"><b>${x[0]}</b><small>${x[1]}</small></div>`).join('');
+    }
+
+    function map() {
+      const la = TR.map(t => t.lat), lo = TR.map(t => t.lon);
+      const a0 = Math.min(...la), a1 = Math.max(...la), o0 = Math.min(...lo), o1 = Math.max(...lo);
+      const X = o => 45 + (o - o0) / (o1 - o0) * 330, Y = a => 285 - (a - a0) / (a1 - a0) * 240;
+      let g = '';
+      for (let i = 1; i < 6; i++) {
+        g += `<line x1="${i * 70}" x2="${i * 70}" y1="10" y2="310" stroke="#1b2434"/><line x1="10" x2="410" y1="${i * 50}" y2="${i * 50}" stroke="#1b2434"/>`;
+      }
+      const dots = TR.map(t => {
+        const l = lvl(t), x = X(t.lon), y = Y(t.lat), r = 9 + t.capacityKva / 14;
+        return `<g class="dot" onclick="location.href='health.html?id=${t.id}'">
+          <circle cx="${x}" cy="${y}" r="${r + 6}" fill="${COL[l]}" opacity=".15"/>
+          <circle cx="${x}" cy="${y}" r="${r}" fill="${COL[l]}"/>
+          <text x="${x}" y="${y + r + 14}" fill="#c9d1e0" font-size="11" text-anchor="middle">${t.id}</text>
+        </g>`;
+      }).join('');
+      document.getElementById('map').innerHTML = `<svg viewBox="0 0 420 320">${g}${dots}</svg>`;
+    }
+
+    function fleet() {
+      const rows = [...TR].sort((a, b) => b.unexplainedPct - a.unexplainedPct).map(t => {
+        const l = lvl(t);
+        return `<tr class="click" onclick="location.href='health.html?id=${t.id}'">
+            <td><b>${t.id}</b></td>
+            <td><span class="badge" style="background:${COL[l]}">${NAME[l]}</span></td>
+            <td>${t.unexplainedPct}%</td>
+            <td>${t.peakLoadPct}%</td>
+            <td>${t.hoursAbove110C || 0} h</td>
+        </tr>`;
+      }).join('');
+      document.getElementById('fleet').innerHTML = `<table><tr><th>Transformer</th><th>Status</th><th>Unexplained loss</th><th>Peak load</th><th>Hours >110°C</th></tr>${rows}</table>`;
+    }
+
+    function inspTable(rows) {
+      document.getElementById('insp').innerHTML = `<table>
+        <tr><th>#</th><th>Target</th><th>Type</th><th>Why</th><th>Est. monthly recovery</th><th>Cost</th><th>Priority</th></tr>
+        ${rows.map(r => `<tr class="click" onclick="location.href='health.html?id=${r.transformer}'">
+          <td>${r.rank}</td>
+          <td><b>${r.target}</b><br><span class="sub">${r.transformer}</span></td>
+          <td>${r.type}</td>
+          <td>${r.reason}</td>
+          <td>${inr(r.estMonthlyRecoveryInr)}</td>
+          <td>${inr(r.costInr)}</td>
+          <td><b>${r.priority}×</b></td>
+        </tr>`).join('')}
+      </table>`;
+    }
+  </script>
+</body>
+</html>

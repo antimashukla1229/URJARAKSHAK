@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UrjaRakshak · Red-Team</title><link rel="stylesheet" href="shared.css"></head>
+<body>
+<main>
+  <div class="card">
+    <h2>🔴 Red-team simulator · inject theft and watch UrjaRakshak respond</h2>
+    <div class="rt-row">
+      <label>Transformer<select id="rtTr"></select></label>
+      <label>Theft type<select id="rtType"><option value="meter_bypass">Meter bypass</option><option value="meter_tamper">Meter tamper</option><option value="night_tap">Night tapping</option><option value="hooking">Illegal hooking</option></select></label>
+      <label>Consumers<input id="rtCount" type="number" min="1" max="10" value="3"></label>
+      <label>Days of theft<input id="rtDays" type="number" min="1" max="10" value="10"></label>
+      <button onclick="rtInject()">Inject theft</button>
+      <button class="ghost" onclick="rtReset()">Reset grid</button>
+    </div>
+    <div class="note">Meter bypass and tamper are visible to meter analysis. Night tapping and hooking are invisible to meters and surface only through the transformer energy balance. Short or small thefts may go undetected, which is realistic.</div>
+  </div>
+  <div class="card" id="rtOut">Pick a clean transformer (e.g. TR-104), inject theft, and compare before vs after.</div>
+</main>
+<script src="shared.js"></script>
+<script>
+nav('redteam.html');
+const gv = id => document.getElementById(id).value;
+(async () => {
+  await loadBase();
+  const rs = document.getElementById('rtTr');
+  TR.forEach(t => rs.add(new Option(t.id, t.id)));
+  rs.value = 'TR-104';
+})();
+
+async function rtInject() {
+  const out = document.getElementById('rtOut');
+  out.textContent = 'Injecting theft and re-running the engine…';
+  const body = {transformer: gv('rtTr'), type: gv('rtType'), count: +gv('rtCount'), days: +gv('rtDays')};
+  const r = await authFetch('/api/redteam/inject', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  if (!r.ok) { out.textContent = 'Error ' + r.status + ': ' + (await r.text()); return; }
+  const x = await r.json(), b = x.before, a = x.after;
+  await loadBase();
+  const t = TR.find(z => z.id === x.transformer), l = lvl(t);
+  const row = (n, k, u) => `<tr><td>${n}</td><td>${b[k]}${u}</td><td class="${a[k] != b[k] ? 'up' : ''}">${a[k]}${u}</td></tr>`;
+  out.innerHTML = `<div class="insight"><b>${x.verdict}</b></div>
+    <h2>${x.transformer} now: <span class="badge" style="background:${COL[l]}">${NAME[l]}</span> · <a class="lnk" href="health.html?id=${x.transformer}">open health page</a></h2>
+    <table><tr><th>${x.transformer}</th><th>Before</th><th>After</th></tr>
+      ${row('Unexplained energy loss', 'unexplainedPct', '%')}${row('Meter-invisible hidden load (10d)', 'hiddenKwh', ' kWh')}
+      ${row('Peak hot-spot (true)', 'peakHotSpotC', '°C')}${row('Peak hot-spot (billed view)', 'peakHotSpotBilledViewC', '°C')}
+      ${row('Hours above 110°C', 'hoursAbove110C', ' h')}${row('Ageing vs billed view', 'ageingMultiple', '×')}${row('Thermal health', 'health', '')}</table>
+    <table style="margin-top:10px"><tr><th>Injected consumer</th><th>Flagged by meter analysis</th><th>Theft probability</th></tr>
+      ${x.detection.map(d => `<tr><td>${d.consumerId}</td><td>${d.flaggedByMeterAnalysis ? '✅ yes' : '❌ no'}</td><td>${d.theftProbability}%</td></tr>`).join('')}</table>`;
+}
+
+async function rtReset() {
+  await authFetch('/api/redteam/reset', {method: 'POST'});
+  document.getElementById('rtOut').textContent = 'Grid reset to the original simulated data.';
+}
+</script>
+</body></html>

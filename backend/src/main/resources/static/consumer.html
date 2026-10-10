@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>UrjaRakshak · Consumer Portal</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 13px; color: #a0aec0; font-weight: 600; }
+    .form-group input, .form-group select, .form-group textarea {
+      background: #111827; border: 1px solid #2d3748; color: #fff; padding: 10px; border-radius: 6px; outline: none; font-size: 14px;
+    }
+    .form-group input:focus, .form-group textarea:focus { border-color: #3182ce; }
+    .btn-submit { background: #3182ce; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-submit:hover { background: #2b6cb0; }
+    .alert-box { padding: 12px; border-radius: 6px; font-size: 14px; margin-top: 15px; display: none; }
+    .alert-success { background: rgba(72, 187, 120, 0.15); border: 1px solid #48bb78; color: #68d391; }
+    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+    .status-active { background: #e53e3e; color: white; }
+    .status-normal { background: #38a169; color: white; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="grid">
+      <!-- Feature 1: Vacation / Away Mode Meter Inspector -->
+      <div class="card">
+        <h2>🏠 Away Mode & Daily Usage Inspector</h2>
+        <p style="font-size: 13px; color: #a0aec0; margin-bottom: 15px;">
+          Set your home status to <b>"Away"</b> when traveling. If our real-time telemetry detects unexpected energy consumption while you are not at home, an anomaly alert will be logged.
+        </p>
+
+        <div class="form-group">
+          <label>Consumer ID / Meter No.</label>
+          <input type="text" id="consumerId" value="C0108" placeholder="e.g. C0108">
+        </div>
+
+        <div class="form-group">
+          <label>Home Status</label>
+          <select id="homeStatus" onchange="toggleAwayMode()">
+            <option value="HOME">At Home (Normal Monitoring)</option>
+            <option value="AWAY">Away / Traveling (Zero-Usage Inspection)</option>
+          </select>
+        </div>
+
+        <div id="awayStatusBox" style="margin-top: 15px; padding: 12px; background: #1a202c; border-radius: 8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Current Status:</span>
+            <span id="badgeStatus" class="status-badge status-normal">NORMAL</span>
+          </div>
+          <div id="usageStats" style="margin-top: 10px; font-size: 13px; color: #cbd5e0;">
+            • Last 24h Average Usage: <b>0.45 kWh/hr</b><br>
+            • Expected Baseline when Away: <b><0.05 kWh/hr</b> (Refrigerators/Standby only)
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature 2: Consumer Grievance & Complaint Logging -->
+      <div class="card">
+        <h2>📝 Register Meter Inspection / Complaint</h2>
+        <form id="complaintForm" onsubmit="handleComplaintSubmit(event)">
+          <div class="form-group">
+            <label>Complaint Type</label>
+            <select id="complaintType" required>
+              <option value="">-- Select Issue Type --</option>
+              <option value="UNEXPECTED_USAGE">Unexpected Usage / High Reading while Away</option>
+              <option value="METER_FAULT">Meter Display / Hardware Fault</option>
+              <option value="BILLING_DISCREPANCY">Billing & Tariff Discrepancy</option>
+              <option value="SUSPECTED_THEFT">Report Local Hooking / Bypass</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Contact Phone Number</label>
+            <input type="tel" id="contactPhone" placeholder="+91 9876543210" required>
+          </div>
+
+          <div class="form-group">
+            <label>Issue Description</label>
+            <textarea id="complaintDetails" rows="4" placeholder="Describe the issue or specify the dates when you were away..." required></textarea>
+          </div>
+
+          <button type="submit" class="btn-submit">Submit Ticket to DISCOM</button>
+        </form>
+
+        <div id="successAlert" class="alert-box alert-success">
+          ✅ <b>Complaint Registered Successfully!</b><br>
+          Ticket ID: <span id="ticketId">#URJ-8942</span>. A DISCOM field inspector has been assigned to audit your meter telemetry.
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="shared.js"></script>
+  <script src="eric.js"></script>
+  <script>
+    nav('consumer.html');
+
+    function toggleAwayMode() {
+      const status = document.getElementById("homeStatus").value;
+      const badge = document.getElementById("badgeStatus");
+      const stats = document.getElementById("usageStats");
+
+      if (status === "AWAY") {
+        badge.className = "status-badge status-active";
+        badge.innerText = "VACATION INSPECTION ACTIVE";
+        stats.innerHTML = `
+          • High-Sensitivity Telemetry Active! ⚡<br>
+          • Automated alerts will trigger if power consumption exceeds <b>0.1 kWh</b>.
+        `;
+      } else {
+        badge.className = "status-badge status-normal";
+        badge.innerText = "NORMAL";
+        stats.innerHTML = `
+          • Last 24h Average Usage: <b>0.45 kWh/hr</b><br>
+          • Expected Baseline when Away: <b><0.05 kWh/hr</b>
+        `;
+      }
+    }
+
+    function handleComplaintSubmit(e) {
+      e.preventDefault();
+      const ticketNum = "URJ-" + Math.floor(1000 + Math.random() * 9000);
+      document.getElementById("ticketId").innerText = ticketNum;
+      document.getElementById("successAlert").style.display = "block";
+      document.getElementById("complaintForm").reset();
+    }
+  </script>
+</body>
+</html>

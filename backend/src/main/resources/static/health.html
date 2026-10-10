@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UrjaRakshak · Transformer Health</title><link rel="stylesheet" href="shared.css"></head>
+<body>
+<main>
+  <div class="rt-row"><label>Transformer<select id="pick"></select></label></div>
+  <div class="card" id="detail">Loading…</div>
+  <div class="card"><h2>Fleet thermal health (what the utility sees vs reality)</h2><div id="fleet"></div>
+    <div class="note">Thermal model is a simplified IEEE C57.91 style estimate, not calibrated to real nameplate data.</div></div>
+</main>
+<script src="shared.js"></script>
+<script>
+nav('health.html');
+(async () => {
+  await loadBase();
+  const p = document.getElementById('pick');
+  TR.forEach(t => p.add(new Option(t.id, t.id)));
+  const worst = [...TR].sort((a, b) => b.unexplainedPct - a.unexplainedPct)[0].id;
+  p.value = TR.find(t => t.id === qs('id')) ? qs('id') : worst;
+  p.onchange = () => show(p.value);
+  show(p.value); fleet();
+})();
+
+function fleet() {
+  const rows = Object.values(TH).map(t => `<tr class="click" onclick="pickTr('${t.id}')"><td><b>${t.id}</b></td><td>${t.peakHotSpotC}°C</td><td>${t.peakHotSpotBilledViewC}°C</td>
+    <td>${t.hoursAbove110C} h</td><td>${t.ageingMultiple}×</td><td>${t.health}</td></tr>`).join('');
+  document.getElementById('fleet').innerHTML = `<table><tr><th>Transformer</th><th>Peak hot-spot (true)</th><th>Peak (billed view)</th><th>Hours &gt;110°C</th><th>Ageing vs billed</th><th>Thermal health</th></tr>${rows}</table>`;
+}
+function pickTr(id) { document.getElementById('pick').value = id; show(id); scrollTo(0, 0); }
+
+async function show(id) {
+  const [d, th] = await Promise.all([J('/api/transformers/' + id), J('/api/transformers/' + id + '/thermal')]);
+  const t = TR.find(x => x.id === id), l = lvl(t);
+  const sus = d.suspectConsumers.slice(0, 8).map(s =>
+    `<tr><td>${s.consumerId}</td><td>${s.theftProbability}%</td><td>${s.readingVsNeighboursPct}% of neighbours' trend</td><td>${Math.round(s.estUnmeteredKwh)} kWh</td></tr>`).join('');
+  document.getElementById('detail').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3>${id} <span class="sub">${t.capacityKva} kVA</span></h3><span class="badge" style="background:${COL[l]}">${NAME[l]}</span></div>
+    <div class="stats">
+      <div class="stat"><b>${t.unexplainedPct}%</b><small>Unexplained energy loss</small></div>
+      <div class="stat"><b>${t.peakLoadPct}%</b><small>Peak load vs capacity</small></div>
+      <div class="stat"><b>${th.peakHotSpotC}°C</b><small>Peak hot-spot (true)</small></div>
+      <div class="stat"><b>${th.ageingMultiple}×</b><small>Ageing vs billed view</small></div></div>
+    <div class="charts">
+      <div><h2>Unexplained loss % per day</h2><div id="c1"></div></div>
+      <div><h2>Peak hot-spot °C: true vs billed view</h2><div id="c2"></div></div></div>
+    <div class="insight">Consumer meters suggest a peak hot-spot of <b>${th.peakHotSpotBilledViewC}°C</b>, but the transformer input meter says <b>${th.peakHotSpotC}°C</b>
+      (${th.hoursAbove110C} hours above 110°C). Hidden load is making this transformer age <b>${th.ageingMultiple}×</b> faster than billing data shows.</div>
+    <h2>Location (Google Maps)</h2>
+    <iframe title="map" width="100%" height="280" style="border:0;border-radius:10px" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+      src="https://maps.google.com/maps?q=${t.lat},${t.lon}&z=16&output=embed"></iframe>
+    <div class="note">Coordinates are simulated (${t.lat.toFixed(5)}, ${t.lon.toFixed(5)}). <a class="lnk" target="_blank" href="https://www.google.com/maps/search/?api=1&query=${t.lat},${t.lon}">Open in Google Maps</a> · replace lat/lon in data/grid.csv with real positions to show real sites.</div>
+    <h2>Hidden load by hour of day (kW)</h2><div id="c3"></div>
+    <div class="note">${d.meterInvisibleHiddenKwh} kWh in 10 days is not explained by any flagged meter. Night bars highlighted: a night-heavy pattern suggests night tapping.</div>
+    <h2 style="margin-top:14px">Suspect meters</h2>
+    ${sus ? `<table><tr><th>Consumer</th><th>Theft prob.</th><th>Reading</th><th>Unmetered</th></tr>${sus}</table>` : '<div class="note">No meter-level suspects on this transformer.</div>'}`;
+  lineChart('c1', [{data: t.dailyUnexplainedPct, color: '#f5a623'}]);
+  lineChart('c2', [{data: th.dailyPeakHotSpotC, color: '#ff4d4f', label: 'True'}, {data: th.dailyPeakHotSpotBilledViewC, color: '#4da3ff', label: 'Billed view'}], {ref: 110});
+  barChart('c3', d.hiddenLoadByHourKw);
+}
+</script>
+</body></html>

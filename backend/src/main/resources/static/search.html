@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UrjaRakshak · Search</title><link rel="stylesheet" href="shared.css"></head>
+<body>
+<main>
+  <div class="card">
+    <h2>Search consumers and transformers</h2>
+    <div class="rt-row">
+      <label>ID<input id="q" style="width:280px" placeholder="e.g. C0025 or TR-103" oninput="debounce()"></label>
+      <button class="ghost" onclick="run(true)">Show flagged meters</button>
+    </div>
+    <div class="note">This prototype simulates a single DISCOM (8 transformers, 472 consumers), so search works on consumer and transformer IDs.</div>
+    <div id="res"></div>
+  </div>
+  <div class="card" id="detail" style="display:none"></div>
+</main>
+<script src="shared.js"></script>
+<script>
+nav('search.html');
+const $ = id => document.getElementById(id);
+let tm;
+function debounce() { clearTimeout(tm); tm = setTimeout(() => run(false), 250); }
+
+async function run(flag) {
+  const x = await J('/api/search?q=' + encodeURIComponent($('q').value) + '&flagged=' + (flag === true));
+  const tr = x.transformers.map(t => `<tr class="click" onclick="location.href='health.html?id=${t.id}'"><td><b>${t.id}</b></td><td>Transformer</td><td>${t.capacityKva} kVA</td><td><a class="lnk">Open health page</a></td></tr>`).join('');
+  const cs = x.consumers.map(c => `<tr class="click" onclick="showConsumer('${c.id}')"><td><b>${c.id}</b></td><td>Consumer on ${c.transformer}</td>
+    <td>${c.flagged ? '<span class="badge" style="background:#ff4d4f">FLAGGED</span>' : 'Normal'}</td><td>${c.flagged ? c.theftProbability + '% theft prob.' : ''}</td></tr>`).join('');
+  $('res').innerHTML = (tr + cs) ? `<table style="margin-top:10px"><tr><th>ID</th><th>Type</th><th>Status</th><th></th></tr>${tr}${cs}</table>` : '<div class="note" style="margin-top:10px">No match. Try part of an ID, like C00 or TR-1.</div>';
+}
+
+async function showConsumer(id) {
+  const x = await J('/api/consumers/' + id), bad = x.status === 'SUSPECT';
+  const d = $('detail'); d.style.display = 'block';
+  d.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+      <h3>${x.consumerId} <span class="sub">on ${x.transformer}</span></h3>
+      <span class="badge" style="background:${bad ? '#ff4d4f' : '#2ecc71'}">${bad ? 'SUSPECT' : 'NORMAL'}</span></div>
+    <div class="stats">
+      <div class="stat"><b>${x.baselineKw} kW</b><small>Baseline avg (first 5 days)</small></div>
+      <div class="stat"><b>${x.recentKw} kW</b><small>Recent avg (last 10 days)</small></div>
+      <div class="stat"><b>${x.vsNeighboursPct}%</b><small>vs neighbours' trend</small></div>
+      <div class="stat"><b>${x.theftProbability}%</b><small>Theft probability</small></div></div>
+    <h2>Daily average reading (kW): actual vs expected from neighbours' trend</h2><div id="c1" style="max-width:560px"></div>
+    <div class="insight">${x.explanation}</div>
+    <a class="lnk" href="health.html?id=${x.transformer}">Open ${x.transformer} health page</a>`;
+  lineChart('c1', [{data: x.dailyActualKw, color: '#ff4d4f', label: 'Actual'}, {data: x.dailyExpectedKw, color: '#4da3ff', label: 'Expected'}]);
+  d.scrollIntoView({behavior: 'smooth'});
+}
+</script>
+</body></html>

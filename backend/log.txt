@@ -1,0 +1,68 @@
+[INFO] Scanning for projects...
+[INFO] Loaded 24026 auto-discovered prefixes for remote repository central (prefixes-central.txt)
+[INFO] 
+[INFO] ------------------------< com.urja:urjarakshak >------------------------
+[INFO] Building urjarakshak 0.1.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.3.5:run (default-cli) > test-compile @ urjarakshak >>>
+[INFO] Loaded 74 auto-discovered prefixes for remote repository apache.snapshots (prefixes-apache.snapshots.txt)
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ urjarakshak ---
+[INFO] skip non existing resourceDirectory /Users/antimashukla/Downloads/urjarakshak/backend/src/main/resources
+[INFO] skip non existing resourceDirectory /Users/antimashukla/Downloads/urjarakshak/backend/src/main/resources
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ urjarakshak ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ urjarakshak ---
+[INFO] skip non existing resourceDirectory /Users/antimashukla/Downloads/urjarakshak/backend/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ urjarakshak ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] <<< spring-boot:3.3.5:run (default-cli) < test-compile @ urjarakshak <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.3.5:run (default-cli) @ urjarakshak ---
+[INFO] Loaded 50 auto-discovered prefixes for remote repository ow2-snapshot (prefixes-ow2-snapshot.txt)
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.5)
+
+2026-10-08T13:20:58.448+05:30  INFO 12333 --- [           main] com.urja.UrjaApplication                 : Starting UrjaApplication using Java 27 with PID 12333 (/Users/antimashukla/Downloads/urjarakshak/backend/target/classes started by antimashukla in /Users/antimashukla/Downloads/urjarakshak/backend)
+2026-10-08T13:20:58.450+05:30  INFO 12333 --- [           main] com.urja.UrjaApplication                 : No active profile set, falling back to 1 default profile: "default"
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by org.apache.tomcat.jni.Library in an unnamed module (file:/Users/antimashukla/.m2/repository/org/apache/tomcat/embed/tomcat-embed-core/10.1.31/tomcat-embed-core-10.1.31.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+2026-10-08T13:20:58.721+05:30  INFO 12333 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-10-08T13:20:58.726+05:30  INFO 12333 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-08T13:20:58.726+05:30  INFO 12333 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.31]
+2026-10-08T13:20:58.746+05:30  INFO 12333 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-10-08T13:20:58.747+05:30  INFO 12333 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 279 ms
+>>> UrjaRakshak data loaded: 8 transformers, 720 hours
+2026-10-08T13:20:58.895+05:30  INFO 12333 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2026-10-08T13:20:58.898+05:30  INFO 12333 --- [           main] com.urja.UrjaApplication                 : Started UrjaApplication in 0.56 seconds (process running for 0.664)
+[INFO] ------------------------------------------------------------------------
+[ERROR] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  28:28 min
+[INFO] Finished at: 2026-10-08T13:49:24+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.3.5:run (default-cli) on project urjarakshak: Process terminated with exit code: 137 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

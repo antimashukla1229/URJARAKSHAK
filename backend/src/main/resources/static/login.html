@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UrjaRakshak · Login</title><link rel="stylesheet" href="shared.css">
+<style>.wrap{max-width:400px;margin:8vh auto;padding:0 16px}.f{display:flex;flex-direction:column;gap:12px;margin-top:14px}.f input,.f select{width:100%}
+.tabs{display:flex;gap:6px;margin-top:14px}.tabs button{flex:1;background:transparent;border:1px solid var(--line);color:var(--mut)}.tabs button.on{background:#1b2638;color:var(--tx)}
+#msg{color:var(--r);min-height:18px;font-size:13px}</style></head>
+<body><div class="wrap"><div class="card">
+  <h1>⚡ Urja<span>Rakshak</span></h1><div class="sub">AI-powered grid intelligence · simulated data</div>
+  <div class="tabs"><button id="tLogin" class="on" onclick="setMode('login')">Log in</button><button id="tSignup" onclick="setMode('signup')">Sign up</button></div>
+  <div class="f">
+    <div id="su" style="display:none;flex-direction:column;gap:12px">
+      <label>Full name<input id="name" autocomplete="name"></label>
+      <label>Role<select id="role"><option value="officer">DISCOM officer</option><option value="inspector">Field inspector</option></select></label>
+      <label>DISCOM name<input id="discom" placeholder="Demo DISCOM"></label>
+    </div>
+    <label>Email<input id="email" type="email" autocomplete="username"></label>
+    <label>Password<input id="pw" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')go()"></label>
+    <div id="msg"></div>
+    <button id="go" onclick="go()">Log in</button>
+  </div>
+  <div class="note">Demo-grade login: passwords are hashed and sessions live in server memory. Not production security.</div>
+</div></div>
+<script>
+const $ = id => document.getElementById(id);
+if (localStorage.getItem('urja_token')) location.href = 'index.html';
+let mode = 'login';
+function setMode(m) {
+  mode = m; $('su').style.display = m === 'signup' ? 'flex' : 'none';
+  $('go').textContent = m === 'signup' ? 'Create account' : 'Log in';
+  $('tLogin').className = m === 'login' ? 'on' : ''; $('tSignup').className = m === 'signup' ? 'on' : ''; $('msg').textContent = '';
+}
+async function go() {
+  const body = mode === 'signup' ? {name: $('name').value, role: $('role').value, discom: $('discom').value, email: $('email').value, password: $('pw').value}
+                                 : {email: $('email').value, password: $('pw').value};
+  const r = await fetch('/api/auth/' + mode, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  const x = await r.json().catch(() => ({}));
+  if (!r.ok) { $('msg').textContent = x.message || ('Error ' + r.status); return; }
+  localStorage.setItem('urja_token', x.token); location.href = 'index.html';
+}
+</script></body></html>
